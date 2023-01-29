@@ -1,13 +1,9 @@
 #include <iostream>
 #include "queue.h"
-#define _CRTDBG_MAP_ALLOC
-#include <cstdlib>
-#include <crtdbg.h>
 
 using namespace std;
 
-void wrapper()
-{
+int main() {
     MyQueue<int> queue;
 
     //isEmpty is used in the pop method, but just to be safe
@@ -44,8 +40,5 @@ void wrapper()
     cout << queue.IsEmpty();
     cout << endl;
 
-}
-
-int main() {
-    wrapper();
+    queue.~MyQueue();
 }
