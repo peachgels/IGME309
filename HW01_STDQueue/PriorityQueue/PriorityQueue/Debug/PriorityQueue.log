@@ -1,0 +1,3 @@
+﻿  main.cpp
+C:\Users\Sammi\OneDrive\Documents\GitHub\IGME309\HW01_STDQueue\PriorityQueue\PriorityQueue\queue.h(123): warning C4715: 'MyQueue<int>::Pop': not all control paths return a value
+  PriorityQueue.vcxproj -> C:\Users\Sammi\OneDrive\Documents\GitHub\IGME309\HW01_STDQueue\PriorityQueue\Debug\PriorityQueue.exe
