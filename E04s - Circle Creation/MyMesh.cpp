@@ -12,9 +12,14 @@ void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	if (a_nSubdivisions > 360)
 		a_nSubdivisions = 360;
 
+	//used in the for loop
 	std::vector<vector3 > vertex;
+	//initial angle
 	GLfloat theta = 0;
+	//change in (as determined by hard-coded subdivisions)
 	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, 0.0f);
@@ -22,6 +27,7 @@ void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		vertex.push_back(temp);
 	}
 
+	//adds the tris for as many subdivisions using the vertex vector to keep track of position
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		AddTri(ZERO_V3, vertex[i], vertex[(i + 1) % a_nSubdivisions]);

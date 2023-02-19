@@ -60,8 +60,36 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+
+	std::vector<vector3 > vertex;
+
+	//initial angle
+	GLfloat theta = 0;
+	vector3 tip = vector3(0, 0, a_fHeight);
+
+	//change in (as determined by hard-coded subdivisions)
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, 0.0f);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+
+
+	//adds the tris for as many subdivisions using the vertex vector to keep track of position
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(ZERO_V3, vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+		AddTri(vertex[(i + 1) % a_nSubdivisions], vertex[i], ZERO_V3);
+
+		// adds the tris for the tip to the base
+		AddTri(tip, vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+	}
+
+
 	// -------------------------------
 
 	// Adding information about color
@@ -84,9 +112,44 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	std::vector<vector3 > vertex;
+	std::vector<vector3 > vertex2;
+
+	//initial angle
+	GLfloat theta = 0;
+
+	//change in (as determined by hard-coded subdivisions)
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, 0.0f);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, a_fHeight);
+		theta += delta;
+		vertex2.push_back(temp);
+	}
+	//adds the tris for as many subdivisions using the vertex vector to keep track of position
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		//bottom
+		AddTri(ZERO_V3, vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+		AddTri(vertex[(i + 1) % a_nSubdivisions], vertex[i], ZERO_V3);
+
+		//top
+		AddTri(vector3(0.0f, 0.0f, a_fHeight), vertex2[i], vertex2[(i + 1) % a_nSubdivisions]);
+		AddTri(vertex2[(i + 1) % a_nSubdivisions], vertex2[i], vector3(0.0f, 0.0f, a_fHeight));
+
+		//sides
+		AddTri(vertex[i], vertex[(i + 1) % a_nSubdivisions], vertex2[i]);
+		AddTri(vertex2[i], vertex[(i + 1) % a_nSubdivisions], vertex2[(i + 1) % a_nSubdivisions]);
+
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -114,13 +177,79 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	//these keep track of the inner and outer vertices of the top and bottom
+	std::vector<vector3 > vertex;
+	std::vector<vector3 > vertex2;
+	std::vector<vector3 > vertex3;
+	std::vector<vector3 > vertex4;
 
-	// Adding information about color
-	CompleteMesh(a_v3Color);
-	CompileOpenGL3X();
+	//initial angle
+	GLfloat theta = 0;
+
+	//change in (as determined by hard-coded subdivisions)
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
+	//bottom inner vertices
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fInnerRadius, sin(theta) * a_fInnerRadius, 0.0f);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+
+	theta = 0;
+
+	//bottom outer vertices
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fOuterRadius, sin(theta) * a_fOuterRadius, 0.0f);
+		theta += delta;
+		vertex2.push_back(temp);
+	}
+
+	theta = 0;
+
+	//top inner
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fInnerRadius, sin(theta) * a_fInnerRadius, a_fHeight);
+		theta += delta;
+		vertex3.push_back(temp);
+	}
+
+	theta = 0;
+
+	//top outer
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fOuterRadius, sin(theta) * a_fOuterRadius, a_fHeight);
+		theta += delta;
+		vertex4.push_back(temp);
+	}
+
+//loops through the subdivisions
+for (int i = 0; i < a_nSubdivisions; i++)
+{
+	//these lines draw the front and back of the top and bottom rings
+	AddQuad(vertex[i], vertex[(i + 1) % a_nSubdivisions], vertex2[i], vertex2[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex2[i], vertex2[(i + 1) % a_nSubdivisions], vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex3[i], vertex3[(i + 1) % a_nSubdivisions], vertex4[i], vertex4[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex4[i], vertex4[(i + 1) % a_nSubdivisions], vertex3[i], vertex3[(i + 1) % a_nSubdivisions]);
+
+	//these lines draw the inside and outside of the connecting quads between the two rings
+	AddQuad(vertex[i], vertex[(i + 1) % a_nSubdivisions], vertex3[i], vertex3[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex2[i], vertex2[(i + 1) % a_nSubdivisions], vertex4[i], vertex4[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex3[i], vertex3[(i + 1) % a_nSubdivisions], vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+	AddQuad(vertex4[i], vertex4[(i + 1) % a_nSubdivisions], vertex2[i], vertex2[(i + 1) % a_nSubdivisions]);
+
+}
+
+// -------------------------------
+
+// Adding information about color
+CompleteMesh(a_v3Color);
+CompileOpenGL3X();
 }
 void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSubdivisionsA, int a_nSubdivisionsB, vector3 a_v3Color)
 {
@@ -147,7 +276,63 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	std::vector<vector3 > vertex;
+	std::vector<vector3 > vertexList;
+	int vertexCount = 0;
+
+
+	//initial angle
+	GLfloat theta = 0;
+
+	//change in (as determined by hard-coded subdivisions)
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsA));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fInnerRadius, sin(theta) * a_fInnerRadius, 0.0f);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+
+	//angle of rotation of the circles themselves
+	GLfloat phi = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsB));
+
+	//loops through each circle, grabbing their vertices, applying transforms, and drawing
+	for (uint subD = 0; subD < a_nSubdivisionsB; subD++) {
+		matrix4 m4Transform;
+		m4Transform = glm::rotate(m4Transform, phi * subD, vector3(0.0f, 1.0f, 0.0f));
+		m4Transform = glm::translate(m4Transform, vector3(a_fOuterRadius, 0.0f, 0.0f));
+		std::vector<vector3 > vertexCopy = vertex;
+
+		for (int i = 0; i < a_nSubdivisionsA; i++)
+		{
+			vertexCopy[i] = m4Transform * vector4(vertexCopy[i], 1.0f);
+			vertexList.push_back(vertexCopy[i]);
+			vertexCount++;
+		}
+
+		vector3 v3Center = ZERO_V3;
+		v3Center = m4Transform * vector4(v3Center, 1.0f);
+
+		//adds the tris for as many subdivisions using the vertex vector to keep track of position
+		for (int i = 0; i < a_nSubdivisionsA; i++)
+		{
+			AddTri(v3Center, vertexCopy[i], vertexCopy[(i + 1) % a_nSubdivisionsA]);
+			AddTri(vertexCopy[(i + 1) % a_nSubdivisionsA], vertexCopy[i], v3Center);
+		}
+	}
+
+	//draws connecting quads between thr circles
+	for (uint i = 0; i < a_nSubdivisionsA; i++) {
+		for (uint k = 0; k < a_nSubdivisionsB; k++) {
+			AddQuad(vertexList[(i * a_nSubdivisionsB) + k],
+				vertexList[(((i + 1) * a_nSubdivisionsB) % vertexCount) + k],
+				vertexList[(i * a_nSubdivisionsB) + ((k + 1) % a_nSubdivisionsB)],
+				vertexList[(((i + 1) * a_nSubdivisionsB) % vertexCount) + ((k + 1) % a_nSubdivisionsB)]);
+		}
+	}
+		
 	// -------------------------------
 
 	// Adding information about color
@@ -165,14 +350,71 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		GenerateCube(a_fRadius * 2.0f, a_v3Color);
 		return;
 	}
-	if (a_nSubdivisions > 6)
+	if (a_nSubdivisions > 6) {
 		a_nSubdivisions = 6;
+	}
+
+	//hard coded to make the sphere look better
+	a_nSubdivisions = 10;
+
 
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	
+	//this is just recycled torus code but it doesn't translate the circles at all from the center
+	std::vector<vector3 > vertex;
+	std::vector<vector3 > vertexList;
+	int vertexCount = 0;
+
+
+	//initial angle
+	GLfloat theta = 0;
+
+	//change in (as determined by hard-coded subdivisions)
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+
+	//loops through as many vertices to find out their equal spacing apart from each other 
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, 0.0f);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+	GLfloat phi = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+	for (uint subD = 0; subD < a_nSubdivisions; subD++) {
+		matrix4 m4Transform;
+		m4Transform = glm::rotate(m4Transform, phi * subD, vector3(0.0f, 1.0f, 0.0f));
+		m4Transform = glm::translate(m4Transform, vector3(a_fRadius, 0.0f, 0.0f));
+		std::vector<vector3 > vertexCopy = vertex;
+
+		for (int i = 0; i < a_nSubdivisions; i++)
+		{
+			vertexCopy[i] = m4Transform * vector4(vertexCopy[i], 0.0f);
+			vertexList.push_back(vertexCopy[i]);
+			vertexCount++;
+		}
+
+		vector3 v3Center = ZERO_V3;
+		vector3 top = vector3(1.0f, 0.0f, 0.0f);
+		vector3 bottom = vector3(-1.0f, 0.0f, 0.0f);
+		v3Center = m4Transform * vector4(v3Center, 1.0f);
+
+		//adds the tris for as many subdivisions using the vertex vector to keep track of position
+		for (int i = 0; i < a_nSubdivisions; i++)
+		{
+			AddTri(v3Center, vertexCopy[i], vertexCopy[(i + 1) % a_nSubdivisions]);
+			AddTri(vertexCopy[(i + 1) % a_nSubdivisions], vertexCopy[i], v3Center);
+		}
+	}
+	for (uint i = 0; i < a_nSubdivisions; i++) {
+		for (uint k = 0; k < a_nSubdivisions; k++) {
+			AddQuad(vertexList[(i * a_nSubdivisions) + k],
+				vertexList[(((i + 1) * a_nSubdivisions) % vertexCount) + k],
+				vertexList[(i * a_nSubdivisions) + ((k + 1) % a_nSubdivisions)],
+				vertexList[(((i + 1) * a_nSubdivisions) % vertexCount) + ((k + 1) % a_nSubdivisions)]);
+		}
+	}
 	// -------------------------------
 
 	// Adding information about color
