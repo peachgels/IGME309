@@ -5,13 +5,18 @@ void MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3 a_v3Targ
 {
 	//TODO:: replace the super call with your functionality
 	//Tip: Changing any positional vector forces you to calculate new directional ones
-	super::SetPositionTargetAndUpward(a_v3Position, a_v3Target, a_v3Upward);
+	m_v3Position = a_v3Position;
+	m_v3Target = a_v3Target;
+
+	m_v3Above = a_v3Position + glm::normalize(a_v3Upward);
 
 	//After changing any vectors you need to recalculate the MyCamera View matrix.
 	//While this is executed within the parent call above, when you remove that line
 	//you will still need to call it at the end of this method
 	CalculateView();
 }
+
+//calculates movement for W and S keys
 void MyCamera::MoveForward(float a_fDistance)
 {
 	//Tips:: Moving will modify both positional and directional vectors,
@@ -21,16 +26,52 @@ void MyCamera::MoveForward(float a_fDistance)
 	//		 in the _Binary folder you will notice that we are moving 
 	//		 backwards and we never get closer to the plane as we should 
 	//		 because as we are looking directly at it.
-	m_v3Position += vector3(0.0f, 0.0f, a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, a_fDistance);
+
+	//set forward vector by normalizing the difference between our target + current position
+	//multiplied by how much we're moving
+	vector3 v3fwdDistance = glm::normalize(m_v3Target - m_v3Position) * a_fDistance;
+
+	//modify position by adding the new forward distance vector
+	m_v3Position += v3fwdDistance;
+
+	//modify direction (target)
+	m_v3Target += v3fwdDistance;
+
+	//modify above
+	m_v3Above += v3fwdDistance;
 }
+
+//calculates movement for Q and E keys
 void MyCamera::MoveVertical(float a_fDistance)
 {
-	//Tip:: Look at MoveForward
+	//get the cross product of the target and up vectors relative to the camera's position
+	//normalized because we only care about direction, not magnitude
+	vector3 rightward = glm::normalize(glm::cross(glm::normalize(m_v3Target - m_v3Position), glm::normalize(m_v3Above - m_v3Position)));
+
+	//set vertical distance based on difference btw target and position + new rightward vector (their cross product)
+	vector3 v3VerticalDistance = glm::normalize(glm::rotate(glm::normalize(m_v3Target - m_v3Position),
+		glm::radians(90.0f),
+		rightward)) * a_fDistance;
+
+	//add the distance to pos, target, and above
+	m_v3Position += v3VerticalDistance;
+	m_v3Target += v3VerticalDistance;
+	m_v3Above += v3VerticalDistance;
 }
+
+//calculates movement for A and D keys
 void MyCamera::MoveSideways(float a_fDistance)
 {
-	//Tip:: Look at MoveForward
+	vector3 fwd = glm::normalize(m_v3Target - m_v3Position);
+	vector3 up = glm::normalize(m_v3Above - m_v3Position);
+	//cross product between up and forward
+	vector3 right = glm::normalize(glm::cross(up, fwd));
+
+	//add the distance to pos, target, and above
+	m_v3Position += right * -a_fDistance;
+	m_v3Target += right * -a_fDistance;
+	m_v3Above += right * -a_fDistance;
+
 }
 void MyCamera::CalculateView(void)
 {
@@ -40,6 +81,22 @@ void MyCamera::CalculateView(void)
 	//		 it will receive information from the main code on how much these orientations
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
+
+	
+	//create an orientation quaternion based on PYR rotations
+	quaternion orientation = quaternion(vector3(m_v3PitchYawRoll.x, m_v3PitchYawRoll.y, m_v3PitchYawRoll.z));
+
+	//using that orientation, update forward and rightward vectors
+	m_v3Forward = glm::normalize(orientation * vector3(0.0f, 0.0f, -1.0f));
+	m_v3Rightward = glm::normalize(orientation * AXIS_X);
+
+	//upward vector updated based on cross product of rightward + forward
+	m_v3Upward = glm::normalize(glm::cross(m_v3Rightward, m_v3Forward));
+
+	//update target and put it in front of camera
+	m_v3Target = m_v3Position + m_v3Forward;
+
+	//update view matrix
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
 }
 //You can assume that the code below does not need changes unless you expand the functionality
