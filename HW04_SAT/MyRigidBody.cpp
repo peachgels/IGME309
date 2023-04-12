@@ -6,6 +6,106 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//TODO: Calculate the SAT algorithm I STRONGLY suggest you use the
 	//Real Time Collision detection algorithm for OBB here but feel free to
 	//implement your own solution.
+
+	float rThis, rOther;
+	glm::mat3 R, AbsR;
+
+	
+	for (uint i = 0; i < 3; i++)
+	{
+		for (uint j = 0; j < 3; j++)
+		{
+			R[i][j] = glm::dot(this->m_m4ToWorld[i], a_pOther->m_m4ToWorld[j]);
+		}
+	}
+
+	//translation vector
+	vector3 translation = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+	//Transform coordinate frame
+	translation = vector3(glm::dot(vector4(translation, 0.0f), this->m_m4ToWorld[0]),
+		glm::dot(vector4(translation, 0.0f), this->m_m4ToWorld[1]),
+		glm::dot(vector4(translation, 0.0f), this->m_m4ToWorld[2]));
+
+	for (uint i = 0; i < 3; i++)
+		for (uint j = 0; j < 3; j++)
+			AbsR[i][j] = glm::abs(R[i][j]) + glm::epsilon<float>();
+
+	//storing halfwidths
+	vector3 ae = this->m_v3HalfWidth;
+	vector3 be = a_pOther->m_v3HalfWidth;
+
+	//Test thisX, thisY, and thisZ
+	for (uint i = 0; i < 3; i++)
+	{
+		rThis = ae[i];
+		rOther = be.x * AbsR[i][0] + be.y + AbsR[i][1] * be.z + AbsR[i][2];
+		if (glm::abs(translation[i]) > rThis + rOther)
+			return BTXs::eSATResults::SAT_AX;
+	}
+
+	// Test otherX, otherY, and otherZ
+	for (uint i = 0; i < 3; i++)
+	{
+		rThis = ae.x * AbsR[0][i] + ae.y + AbsR[1][i] * ae.z + AbsR[2][i];
+		rOther = be[i];
+		if (glm::abs(translation[i]) > rThis + rOther)
+			return BTXs::eSATResults::SAT_BX;
+	}
+
+	//Test cross product of thisX and otherX
+	rThis = ae.y * AbsR[2][0] + ae.z * AbsR[1][0];
+	rOther = be.y * AbsR[0][2] + be.z * AbsR[0][2];
+	if (glm::abs(translation[2] * R[1][0] - translation[1] * R[2][0]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AXxBX;
+
+	//Test cross product of thisX and otherY
+	rThis = ae.y * AbsR[2][1] + ae.z * AbsR[1][1];
+	rOther = be.x * AbsR[0][2] + be.z * AbsR[0][0];
+	if (glm::abs(translation[2] * R[1][1] - translation[1] * R[2][1]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AXxBY;
+
+	//Test cross product of thisX and otherZ
+	rThis = ae.y * AbsR[2][2] + ae.z * AbsR[1][2];
+	rOther = be.x * AbsR[0][1] + be.y * AbsR[0][0];
+	if (glm::abs(translation[2] * R[1][2] - translation[1] * R[2][2]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AXxBZ;
+
+	//Test cross product of thisY and otherX
+	rThis = ae.x * AbsR[2][0] + ae.z * AbsR[0][0];
+	rOther = be.y * AbsR[1][2] + be.z * AbsR[1][1];
+	if (glm::abs(translation[0] * R[2][0] - translation[2] * R[0][0]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AYxBX;
+
+	//Test cross product ofthisY and otherY
+	rThis = ae.x * AbsR[2][1] + ae.z * AbsR[0][1];
+	rOther = be.x * AbsR[1][2] + be.z * AbsR[1][0];
+	if (glm::abs(translation[0] * R[2][1] - translation[2] * R[0][1]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AYxBY;
+
+	//Test cross product of thisY and otherZ
+	rThis = ae.x * AbsR[2][2] + ae.z * AbsR[0][2];
+	rOther = be.x * AbsR[1][1] + be.y * AbsR[1][0];
+	if (glm::abs(translation[0] * R[2][2] - translation[2] * R[0][2]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AYxBZ;
+
+	//Test cross product of thisZ and otherX
+	rThis = ae.x * AbsR[1][0] + ae.y * AbsR[0][0];
+	rOther = be.y * AbsR[2][2] + be.z * AbsR[2][1];
+	if (glm::abs(translation[1] * R[0][0] - translation[0] * R[1][0]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AZxBX;
+
+	//Test cross product of thisZ and otherY
+	rThis = ae.x * AbsR[1][1] + ae.y * AbsR[0][1];
+	rOther = be.x * AbsR[2][2] + be.z * AbsR[2][0];
+	if (glm::abs(translation[1] * R[0][1] - translation[0] * R[1][1]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AZxBY;
+
+	//Test cross product of thisZ and otherZ
+	rThis = ae.x * AbsR[1][2] + ae.y * AbsR[0][2];
+	rOther = be.x * AbsR[2][1] + be.y * AbsR[2][0];
+	if (glm::abs(translation[1] * R[0][2] - translation[0] * R[1][2]) > rThis + rOther)
+		return BTXs::eSATResults::SAT_AZxBZ;
+
 	return BTXs::eSATResults::SAT_NONE;
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
@@ -21,12 +121,14 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 	{
 		uint nResult = SAT(a_pOther);
 
-		if (bColliding) //The SAT shown they are colliding
+		bColliding = nResult == BTXs::eSATResults::SAT_NONE;
+
+		if (bColliding) //SAT showed a collision
 		{
 			this->AddCollisionWith(a_pOther);
 			a_pOther->AddCollisionWith(this);
 		}
-		else //they are not colliding
+		else
 		{
 			this->RemoveCollisionWith(a_pOther);
 			a_pOther->RemoveCollisionWith(this);
@@ -109,7 +211,7 @@ void MyRigidBody::SetColorNotColliding(vector3 a_v3Color) { m_v3ColorNotCollidin
 vector3 MyRigidBody::GetCenterLocal(void) { return m_v3Center; }
 vector3 MyRigidBody::GetMinLocal(void) { return m_v3MinL; }
 vector3 MyRigidBody::GetMaxLocal(void) { return m_v3MaxL; }
-vector3 MyRigidBody::GetCenterGlobal(void){	return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
+vector3 MyRigidBody::GetCenterGlobal(void) { return vector3(m_m4ToWorld * vector4(m_v3Center, 1.0f)); }
 vector3 MyRigidBody::GetMinGlobal(void) { return m_v3MinG; }
 vector3 MyRigidBody::GetMaxGlobal(void) { return m_v3MaxG; }
 vector3 MyRigidBody::GetHalfWidth(void) { return m_v3HalfWidth; }

@@ -103,6 +103,12 @@ MyRigidBody::MyRigidBody(std::vector<vector3> a_pointList)
 		else if (m_v3MinL.z > a_pointList[i].z) m_v3MinL.z = a_pointList[i].z;
 	}
 
+	/*Find the 8 corners of the Oriented Bounding Box
+		A.They are in local space, globalize them
+		• vector3(matrix4 * vector3(vector, 1))
+		2) Do what we did in the constructor
+		A.Find the minand max for those 8 corners
+		B.Find the size of the box*/
 	//with model matrix being the identity, local and global are the same
 	m_v3MinG = m_v3MinL;
 	m_v3MaxG = m_v3MaxL;
